@@ -6,7 +6,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class InvoicePeriod {
+public class InvoicePeriodHelper {
 
 	/**
 	 *  前給の時のinvoiceを作成する時の処理を再現
@@ -21,17 +21,18 @@ public class InvoicePeriod {
 	 *  	✔締め日と締め日の間
 	 *  	✔全締め日よりも後
 	 *  	✔月末
+	 * @throws Exception
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		// 締め日
-		String closingDay = "5,15,20,31";
+		String closingDay = "5,15,25,31";
 
-		InvoicePeriod invoicePeriod = new InvoicePeriod();
+		InvoicePeriodHelper invoicePeriod = new InvoicePeriodHelper();
 		int[]intClosingDayArray = invoicePeriod.stringToIntArray(closingDay);
 
 		// 過去6ヶ月間の開始日と締め日のペアを生成する
 		System.out.println("[開始日 - 締め日]を新しいものから順番に出力");
-		System.out.println(invoicePeriod.createSixMonthsOpeningAndClosingDateList(intClosingDayArray));
+		System.out.println(invoicePeriod.getSixMonthsOpeningAndClosingDateList(intClosingDayArray));
 	}
 
 	/**
@@ -39,7 +40,7 @@ public class InvoicePeriod {
 	 * @param str
 	 * @return
 	 */
-	private int[] stringToIntArray(String str) {
+	public int[] stringToIntArray(String str) throws Exception {
 		String[] strArray;
 		// strを配列に直す
 		if (str.contains(",")) {
@@ -52,8 +53,7 @@ public class InvoicePeriod {
 		for (int i = 0; i < strArray.length; i++) {
 			// 数字以外が入力されていないか確認
 			if (!checkIsNumber(strArray[i])) {
-				System.out.println("締め日のフォーマットが不正です。");
-				System.exit(0);
+				throw new Exception("締め日のフォーマットが不正です。");
 			}
 		}
 		// int型の配列に直す
@@ -61,8 +61,7 @@ public class InvoicePeriod {
 		// 不正な締め日が入力されていないか確認
 		// 同じ数字や、0以下32以上の数字が含まれていないか確認
 		if (!checkIsValidNumber(intArray)) {
-			System.out.println("締め日のフォーマットが不正です。");
-			System.exit(0);
+			throw new Exception("締め日のフォーマットが不正です。");
 		}
 		Arrays.sort(intArray);
 		return intArray;
@@ -73,14 +72,17 @@ public class InvoicePeriod {
 	 * @param intArray
 	 * @return
 	 */
-	private boolean checkIsValidNumber(int[] intArray) {
+	public boolean checkIsValidNumber(int[] intArray) {
 		boolean[] from1To31Array = new boolean[31];
 		for (int i = 0; i < intArray.length; i++) {
+			// 0以下32以上の数字が含まれていないか確認
 			if (!(1 <= intArray[i] && intArray[i] <= 31)) {
 				return false;
 			}
-			if (!from1To31Array[intArray[i] - 1]) {
-				from1To31Array[intArray[i] - 1] = true;
+			// 同じ数字が含まれていないか確認
+			int indexOfFrom1To31Array = intArray[i] - 1;
+			if (!from1To31Array[indexOfFrom1To31Array]) {
+				from1To31Array[indexOfFrom1To31Array] = true;
 			} else {
 				return false;
 			}
@@ -93,7 +95,7 @@ public class InvoicePeriod {
 	 * @param string
 	 * @return
 	 */
-	private boolean checkIsNumber(String string) {
+	public boolean checkIsNumber(String string) {
 		try {
 			Integer.parseInt(string);
 			return true;
@@ -109,7 +111,7 @@ public class InvoicePeriod {
 	 * @param isBackOneMonth
 	 * @return
 	 */
-	public List<String> createSixMonthsOpeningAndClosingDateList(int[] intClosingDayArray) {
+	public List<String> getSixMonthsOpeningAndClosingDateList(int[] intClosingDayArray) {
 		// 現在日時
 		Calendar tmpCalendar = Calendar.getInstance();
 		int tmpCurrentDate = tmpCalendar.get(Calendar.DATE);
@@ -210,7 +212,7 @@ public class InvoicePeriod {
 	 * @param intEndOfMonthsArray
 	 * @return
 	 */
-	private int getClosingDate(int[] intClosingDayArray, int start, int currentMonth, int currentYear, int[] intEndOfMonthsArray) {
+	public int getClosingDate(int[] intClosingDayArray, int start, int currentMonth, int currentYear, int[] intEndOfMonthsArray) {
 		// 閏年の場合は2月28日を29日に変更
 		if (currentYear % 4 == 0) {
 			intEndOfMonthsArray[1] = 29;
@@ -230,7 +232,7 @@ public class InvoicePeriod {
 	 * @param intEndOfMonthsArray
 	 * @return
 	 */
-	private String getOpeningDate(int[] intClosingDayArray, int start, Calendar calendar, int[] intEndOfMonthsArray) {
+	public String getOpeningDate(int[] intClosingDayArray, int start, Calendar calendar, int[] intEndOfMonthsArray) {
 		int openingDay = intClosingDayArray[intClosingDayArray.length - 1];
 		int lastMonth = calendar.get(Calendar.MONTH) + 1;
 		int lastYear = calendar.get(Calendar.YEAR);
