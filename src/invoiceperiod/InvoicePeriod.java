@@ -4,28 +4,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
-import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class InvoicePeriodHelper {
 
 	/**
 	 *  前給の時のinvoiceを作成する時の処理を再現
-	 *
-	 *  テスト項目
-	 *  ・締め日が単数
-	 *  	✔︎現在日時が締め日よりも前
-	 *  	✔後
-	 *  	✔月末
-	 *  ・締め日が複数
-	 *  	✔現在時刻が全締め日よりも前
-	 *  	✔締め日と締め日の間
-	 *  	✔全締め日よりも後
-	 *  	✔月末
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
 		// 締め日
-		String closingDay = "5,15,25,31";
+		String closingDay = "5,15,25,30";
 
 		InvoicePeriodHelper invoicePeriod = new InvoicePeriodHelper();
 		int[]intClosingDayArray = invoicePeriod.stringToIntArray(closingDay);
@@ -41,53 +31,34 @@ public class InvoicePeriodHelper {
 	 * @return
 	 */
 	public int[] stringToIntArray(String str) throws Exception {
-		String[] strArray;
 		// strを配列に直す
+		String[] strArray;
 		if (str.contains(",")) {
-			strArray = str.split(",");
+			strArray = StringUtils.split(str, ",");
 		} else {
 			strArray = new String[1];
 			strArray[0] = str;
 		}
-		// 不正な締め日が入力されていないか確認
+		// バリデーションをかけながらint型配列に直していく
+		int[] intArray = new int[strArray.length];
+		boolean[] from1To31Array = new boolean[31];
 		for (int i = 0; i < strArray.length; i++) {
-			// 数字以外が入力されていないか確認
+			// 不正な締め日が入力されていないか確認
 			if (!checkIsNumber(strArray[i])) {
+				// 数字以外を判定
 				throw new Exception("締め日のフォーマットが不正です。");
+			} else {
+				intArray[i] = Integer.parseInt(strArray[i]);
+				int indexOfFrom1To31Array = intArray[i] - 1;
+				if (!(1 <= intArray[i] && intArray[i] <= 31) || from1To31Array[indexOfFrom1To31Array]) {
+					// 同じ数字と、0以下32以上の数字を判定
+					throw new Exception("締め日のフォーマットが不正です。");
+				}
+				from1To31Array[indexOfFrom1To31Array] = true;
 			}
-		}
-		// int型の配列に直す
-		int[] intArray = Stream.of(strArray).mapToInt(Integer::parseInt).toArray();
-		// 不正な締め日が入力されていないか確認
-		// 同じ数字や、0以下32以上の数字が含まれていないか確認
-		if (!checkIsValidNumber(intArray)) {
-			throw new Exception("締め日のフォーマットが不正です。");
 		}
 		Arrays.sort(intArray);
 		return intArray;
-	}
-
-	/**
-	 * 0以下32以上の数字や、同じ数字が含まれていないか確認
-	 * @param intArray
-	 * @return
-	 */
-	public boolean checkIsValidNumber(int[] intArray) {
-		boolean[] from1To31Array = new boolean[31];
-		for (int i = 0; i < intArray.length; i++) {
-			// 0以下32以上の数字が含まれていないか確認
-			if (!(1 <= intArray[i] && intArray[i] <= 31)) {
-				return false;
-			}
-			// 同じ数字が含まれていないか確認
-			int indexOfFrom1To31Array = intArray[i] - 1;
-			if (!from1To31Array[indexOfFrom1To31Array]) {
-				from1To31Array[indexOfFrom1To31Array] = true;
-			} else {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**
